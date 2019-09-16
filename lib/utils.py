@@ -59,9 +59,9 @@ def plot_images(imgName, path_train_img, path_train_mask):
     path_train_mask: str
         Path to masks directory
     """
-    
-    img = cv2.imread(path_train_img + '{}.jpg'.format(imgName))
-    mask = cv2.imread(path_train_mask + '{}.png'.format(imgName))
+
+    img = Image.open(path_train_img + '{}.jpg'.format(imgName))
+    mask = Image.open(path_train_mask + '{}.png'.format(imgName))
     fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 10))
     axes[0].imshow(img[...,[2,1,0]])
     axes[1].imshow(mask)
@@ -106,6 +106,7 @@ def generator(paths_to_imgs, paths_to_masks, batch_size):
         array of resized images        
         
     """
+    import random
     while True:
         x_batch = []
         y_batch = []
