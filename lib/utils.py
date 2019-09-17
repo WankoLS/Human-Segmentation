@@ -1,5 +1,5 @@
 import numpy as np
-
+import cv2
 
 def encode_rle(mask):
     """Returns encoded mask (run length) as a string.
@@ -58,15 +58,15 @@ def plot_images(imgName, path_train_img, path_train_mask):
         Path to images directory
     path_train_mask: str
         Path to masks directory
+        
     """
 
-    img = Image.open(path_train_img + '{}.jpg'.format(imgName))
-    mask = Image.open(path_train_mask + '{}.png'.format(imgName))
+    img = cv2.imread(path_train_img + '{}.jpg'.format(imgName))
+    mask = cv2.imread(path_train_mask + '{}.png'.format(imgName))
     fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 10))
     axes[0].imshow(img[...,[2,1,0]])
     axes[1].imshow(mask)
     plt.show()
-
     
 def plot_image(x,y):
     """Plots images
@@ -117,7 +117,7 @@ def generator(paths_to_imgs, paths_to_masks, batch_size):
         
         #choose random images from directory
         for i in range(batch_size):
-            a = random.randint(1,1222)
+            a = random.randint(1,len(paths_to_imgs)-10)
             paths_to_imgs_tmp.append(paths_to_imgs[a])
             paths_to_masks_tmp.append(paths_to_masks[a])
             
@@ -154,13 +154,15 @@ def generator(paths_to_imgs, paths_to_masks, batch_size):
             y_batch.append(mask_medium)     
        
         #normalize images
-        x_batch = np.array(x_batch) / 255.
-        y_batch = np.array(y_batch)
+        x_batch = abs(np.array(x_batch) - np.mean(x_batch)) / np.amax(x_batch) 
+        y_batch = np.array(y_batch) / 255.
         
         
         yield x_batch, np.expand_dims(y_batch,-1)
-        
-        
+
+
+
+
 def generator_predict(paths_to_imgs, batch_size):
     """Generates batch of images for predict() method.
     Parameters
@@ -176,31 +178,49 @@ def generator_predict(paths_to_imgs, batch_size):
         
     """
     while True:
-        
         x_batch = []
-        paths_to_imgs_tmp=[]
+        paths_to_imgs_tmp = []
         
-        
+        #get every image in directory
         for i in range(batch_size):
-            a=random.randint(1, batch_size)
-            paths_to_imgs_tmp.append(paths_to_imgs[a])
+            paths_to_imgs_tmp.append(paths_to_imgs[i])
         
-        
+        #add images to batch
         for path_to_img in paths_to_imgs_tmp:
-            
-            img = cv2.imread(path_to_img)
-            img = cv2.resize(img, (256,256))
+            img = cv2.resize(cv2.imread(path_to_img), (224, 224))
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
             x_batch.append(img)
         
-        
-        x_batch = np.array(x_batch)
+        #normalize images
+        x_batch = abs(np.array(x_batch) - np.mean(x_batch)) / np.amax(x_batch) 
 
         
         yield x_batch
-
-        
+def get_rle(pred):
+    """Generates array of rles
+    for predicted masks
+    Parameters
+    ----------
+    pred: np.ndarray (N, 224, 224, 1)
+        Array of model predictions
+        N is number of masks
+    Returns
+    -------
+    pred_rle: array
+        Array of rles for each image
+    """
+    pred_rle = []
+    for img in pred:      
+        img = cv2.resize(img, (240, 320))
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+        tmp = np.copy(img)
+        tmp[tmp<np.mean(img)] = 0
+        tmp[tmp>0] = 1
+        pred_rle.append(encode_rle(tmp))
+    return pred_rle
+ 
+    
 def plot_losses(results):
     """Plots a simple loss graph
     Parameters
@@ -209,8 +229,8 @@ def plot_losses(results):
         
     """
     plt.figure(figsize=(10,10))
-    plt.plot(results.history['dice_loss'])
-    plt.plot(results.history['f1_score'])
+    plt.plot(results.history['loss'])
+    plt.plot(results.history['f1-score'])
     plt.ylabel('Accuracy')
     plt.xlabel('Epoch')
     plt.legend(['Train', 'Test'], loc='upper left')

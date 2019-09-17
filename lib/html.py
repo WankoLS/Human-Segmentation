@@ -23,13 +23,10 @@ def generate_html(path_to_data):
                       "<table cellspacing='0' cellpadding='5'>"]) + "\n"
     paths_to_imgs = sorted(
         ["/".join(path.split("/")[-2:]) for path in glob(f"{path_to_data}/*_img.jpg")])
-    paths_to_imgs = [paths_to_imgs[i].replace('\\', '/') for i in range(len(paths_to_imgs))]
     paths_to_masks = sorted(
         ["/".join(path.split("/")[-2:]) for path in glob(f"{path_to_data}/*_pred_mask.png")])
-    paths_to_masks = [paths_to_masks[i].replace('\\', '/') for i in range(len(paths_to_masks))]
     paths_to_crops = sorted(
         ["/".join(path.split("/")[-2:]) for path in glob(f"{path_to_data}/*_crop.png")])
-    paths_to_crops = [paths_to_crops[i].replace('\\', '/') for i in range(len(paths_to_crops))]
     for ind, (path_to_img, path_to_mask, path_to_crop) in enumerate(zip(paths_to_imgs,
                                                                         paths_to_masks,
                                                                         paths_to_crops)):
