@@ -4,6 +4,6 @@
 
 
 
-Pipeline задания находится в Human-Segmentation.ipynb
+Pipeline задания находится в Segmentation_Model.ipynb
 
 Вспомогательные функции определены в lib/utils.py
